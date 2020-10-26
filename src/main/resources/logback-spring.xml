@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+
+    <property name="LOGS" value="D:/paymentInfo/paymentLogInfo.log"/>
+
+    <appender name="Console"
+              class="ch.qos.logback.core.ConsoleAppender">
+        <layout class="ch.qos.logback.classic.PatternLayout">
+            <Pattern>
+                %black(%d{ISO8601}) %highlight(%-5level) [%blue(%t)]
+                %yellow(%C{1.}): %msg%n%throwable
+            </Pattern>
+        </layout>
+    </appender>
+
+    <appender name="RollingFile"
+              class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOGS}</file>
+        <encoder
+                class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+            <Pattern>%d %p %C{1.} [%t] %m%n</Pattern>
+        </encoder>
+        <rollingPolicy
+                class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>/logs/archived/app.-%d{yyyy-MM-dd}.%i.log
+            </fileNamePattern>
+            <!-- Max log file size 10MB -->
+            <maxFileSize>10MB</maxFileSize>
+            <!-- Logs are kept for 30 days -->
+            <maxHistory>30</maxHistory>
+            <!-- Max total size of log files, if total size > 100MB, oldest log file
+                will be deleted -->
+            <totalSizeCap>100MB</totalSizeCap>
+        </rollingPolicy>
+    </appender>
+
+    <root level="info">
+        <appender-ref ref="Console"/>
+    </root>
+
+    <logger name="com.payment.controller.PaymentController"
+            level="info">
+        <appender-ref ref="RollingFile"/>
+    </logger>
+
+</configuration>
