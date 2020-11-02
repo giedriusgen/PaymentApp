@@ -15,7 +15,7 @@ public class ClientInfo {
     public ClientInfo() {
     }
 
-    public String getCountry_name() {
+    public String getCountryName() {
         return country_name;
     }
 

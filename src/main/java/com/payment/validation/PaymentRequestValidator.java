@@ -96,18 +96,18 @@ public class PaymentRequestValidator implements
 
     private void validateBICParameter(PaymentRequestDto dto, ConstraintValidatorContext context) {
         if (dto.getPaymentType().equals(PaymentType.TYPE3)) {
-            if (dto.getCreditor_bank_BIC_code() == null) {
+            if (dto.getCreditorBankBICCode() == null) {
                 context.buildConstraintViolationWithTemplate(CREDITOR_BANK_BIC_CODE_SHOULD_BE_SPECIFIED_FOR_TYPE3)
-                        .addPropertyNode("creditor_bank_BIC_code")
+                        .addPropertyNode("creditorBankBICCode")
                         .addConstraintViolation();
                 isValid = false;
             } else {
                 validateBICCode(dto, context);
             }
         } else {
-            if (dto.getCreditor_bank_BIC_code() != null) {
+            if (dto.getCreditorBankBICCode() != null) {
                 context.buildConstraintViolationWithTemplate(CREDITOR_BANK_BIC_CODE_SHOULD_BE_SPECIFIED_ONLY_FOR_TYPE3)
-                        .addPropertyNode("creditor_bank_BIC_code")
+                        .addPropertyNode("creditorBankBICCode")
                         .addConstraintViolation();
                 isValid = false;
             }
@@ -115,9 +115,9 @@ public class PaymentRequestValidator implements
     }
 
     private void validateBICCode(PaymentRequestDto dto, ConstraintValidatorContext context) {
-        if (!Bic.isValid(dto.getCreditor_bank_BIC_code())) {
+        if (!Bic.isValid(dto.getCreditorBankBICCode())) {
             context.buildConstraintViolationWithTemplate(CREDITOR_BANK_BIC_CODE_IS_NOT_VALID)
-                    .addPropertyNode("creditor_bank_BIC_code")
+                    .addPropertyNode("creditorBankBICCode")
                     .addConstraintViolation();
             isValid = false;
         }
@@ -126,21 +126,21 @@ public class PaymentRequestValidator implements
     private void validateIBAN(PaymentRequestDto dto, ConstraintValidatorContext context) {
         boolean creditorIbanValid = true;
         boolean debtorIbanValid = true;
-        String creditorIban = dto.getCreditor_iban();
-        String debtorIban = dto.getDebtor_iban();
+        String creditorIban = dto.getCreditorIban();
+        String debtorIban = dto.getDebtorIban();
 
         IBANCheckDigit ibanCheckDigit = new IBANCheckDigit();
 
         if (!ibanCheckDigit.isValid(creditorIban)) {
             context.buildConstraintViolationWithTemplate(CREDITOR_IBAN_IS_NOT_VALID)
-                    .addPropertyNode("creditor_iban")
+                    .addPropertyNode("creditorIban")
                     .addConstraintViolation();
             isValid = false;
             creditorIbanValid = false;
         }
         if (!ibanCheckDigit.isValid(debtorIban)) {
             context.buildConstraintViolationWithTemplate(DEBTOR_IBAN_IS_NOT_VALID)
-                    .addPropertyNode("debtor_iban")
+                    .addPropertyNode("debtorIban")
                     .addConstraintViolation();
             isValid = false;
             debtorIbanValid = false;

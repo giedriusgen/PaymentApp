@@ -6,7 +6,9 @@ import com.payment.enums.currency.PaymentCurrency;
 import com.payment.enums.paymentType.PaymentType;
 import com.payment.errors.exceptions.PaymentCancelException;
 import com.payment.errors.exceptions.PaymentNotFoundException;
+import com.payment.errors.exceptions.SortParameterException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -35,8 +37,8 @@ public class PaymentService {
                 Type1 type1 = new Type1();
                 type1.setDetails(paymentDto.getDetails());
                 type1.setAmount(paymentDto.getAmount());
-                type1.setCreditor_iban(paymentDto.getCreditor_iban());
-                type1.setDebtor_iban(paymentDto.getDebtor_iban());
+                type1.setCreditor_iban(paymentDto.getCreditorIban());
+                type1.setDebtor_iban(paymentDto.getDebtorIban());
                 type1.setPaymentCurrency(paymentDto.getPaymentCurrency());
                 type1.setPaymentType(paymentDto.getPaymentType());
                 type1.setCreationTimeStamp(new Date());
@@ -46,8 +48,8 @@ public class PaymentService {
                 Type2 type2 = new Type2();
                 type2.setDetails(paymentDto.getDetails());
                 type2.setAmount(paymentDto.getAmount());
-                type2.setCreditor_iban(paymentDto.getCreditor_iban());
-                type2.setDebtor_iban(paymentDto.getDebtor_iban());
+                type2.setCreditor_iban(paymentDto.getCreditorIban());
+                type2.setDebtor_iban(paymentDto.getDebtorIban());
                 type2.setPaymentCurrency(paymentDto.getPaymentCurrency());
                 type2.setPaymentType(paymentDto.getPaymentType());
                 type2.setCreationTimeStamp(new Date());
@@ -55,10 +57,10 @@ public class PaymentService {
                 break;
             case TYPE3:
                 Type3 type3 = new Type3();
-                type3.setCreditor_bank_BIC_code(paymentDto.getCreditor_bank_BIC_code());
+                type3.setCreditor_bank_BIC_code(paymentDto.getCreditorBankBICCode());
                 type3.setAmount(paymentDto.getAmount());
-                type3.setCreditor_iban(paymentDto.getCreditor_iban());
-                type3.setDebtor_iban(paymentDto.getDebtor_iban());
+                type3.setCreditor_iban(paymentDto.getCreditorIban());
+                type3.setDebtor_iban(paymentDto.getDebtorIban());
                 type3.setPaymentCurrency(paymentDto.getPaymentCurrency());
                 type3.setPaymentType(paymentDto.getPaymentType());
                 type3.setCreationTimeStamp(new Date());
@@ -75,47 +77,41 @@ public class PaymentService {
     }
 
     @Transactional(readOnly = true)
-    public List<PaymentAmountResponseDto> getNotCanceledPaymentsOrderedByAmountDesc() {
-        return paymentRepository.findByCanceledFalseOrderByAmountDesc().stream()
+    public List<PaymentAmountResponseDto> getNotCanceledPayments(Sort.Direction sortDirection, String sortParameter) {
+        isContainSortValue(sortParameter);
+        return paymentRepository.findByCanceledFalse(Sort.by(sortDirection, sortParameter)).stream()
                 .map((payment -> new PaymentAmountResponseDto(payment.getId(), payment.getAmount())))
                 .collect(Collectors.toList());
-    }
 
-    @Transactional(readOnly = true)
-    public List<PaymentAmountResponseDto> getNotCanceledPaymentsOrderedByAmountAsc() {
-        return paymentRepository.findByCanceledFalseOrderByAmountAsc().stream()
-                .map((payment -> new PaymentAmountResponseDto(payment.getId(), payment.getAmount())))
-                .collect(Collectors.toList());
     }
 
     @Transactional
     public void cancelPayment(Long id) {
+        Payment payment = paymentRepository.findById(id).orElseThrow(() -> new PaymentNotFoundException(PAYMENT_ID_NOT_FOUND));
+        if (payment.isCanceled()) {
+            throw new PaymentCancelException(PAYMENT_IS_ALREADY_CANCELLED);
+        }
+        Date cancellationDate = new Date();
+        if (isSameDay(payment.getCreationTimeStamp(), cancellationDate)) {
+            updateCanceledPayment(payment, cancellationDate);
+        } else {
+            throw new PaymentCancelException(NOT_POSSIBLE_TO_CANCEL_PAYMENT);
+        }
+    }
+
+    public void updateCanceledPayment(Payment payment, Date cancellationDate) {
         int hoursBetweenDates;
         BigDecimal cancellationFee;
-        Payment payment = paymentRepository.findById(id).orElse(null);
-        if (payment != null) {
-            if (Boolean.TRUE != payment.isCanceled()) {
-                Date cancellationDate = new Date();
-                if (isSameDay(payment.getCreationTimeStamp(), cancellationDate)) {
-                    hoursBetweenDates = calculateHoursBetweenTwoDates(payment.getCreationTimeStamp(), cancellationDate);
-                    if (hoursBetweenDates > 0) {
-                        cancellationFee = calculateCancellationFee(payment.getPaymentType(), payment.getPaymentCurrency(), hoursBetweenDates);
-                    } else {
-                        cancellationFee = BigDecimal.ZERO;
-                    }
-                    payment.setCanceled(true);
-                    payment.setCancellationFee(cancellationFee.doubleValue());
-                    payment.setCancellationDate(cancellationDate);
-                    paymentRepository.save(payment);
-                } else {
-                    throw new PaymentCancelException(NOT_POSSIBLE_TO_CANCEL_PAYMENT);
-                }
-            } else {
-                throw new PaymentCancelException(PAYMENT_IS_ALREADY_CANCELLED);
-            }
+        hoursBetweenDates = calculateHoursBetweenTwoDates(payment.getCreationTimeStamp(), cancellationDate);
+        if (hoursBetweenDates > 0) {
+            cancellationFee = calculateCancellationFee(payment.getPaymentType(), payment.getPaymentCurrency(), hoursBetweenDates);
         } else {
-            throw new PaymentNotFoundException(PAYMENT_ID_NOT_FOUND);
+            cancellationFee = BigDecimal.ZERO;
         }
+        payment.setCanceled(true);
+        payment.setCancellationFee(cancellationFee.doubleValue());
+        payment.setCancellationDate(cancellationDate);
+        paymentRepository.save(payment);
     }
 
     public boolean isSameDay(Date startTime, Date endTime) {
@@ -170,6 +166,16 @@ public class PaymentService {
                 currencyCoefficient = 0;
         }
         return currencyCoefficient;
+    }
+
+    public void isContainSortValue(String sortParameter) {
+        List<String> possibleValues = new ArrayList<>();
+        possibleValues.add("creationTimeStamp");
+        possibleValues.add("amount");
+
+        if (!possibleValues.contains(sortParameter)) {
+            throw new SortParameterException(INCORRECT_SORT_PARAMETER);
+        }
     }
 
 

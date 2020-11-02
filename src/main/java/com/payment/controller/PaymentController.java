@@ -11,6 +11,7 @@ import io.swagger.annotations.ApiParam;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
@@ -46,20 +47,14 @@ public class PaymentController {
         return paymentService.getPaymentWithCancellationFee(paymentId);
     }
 
-    @RequestMapping(path = "/payments-by-amount-desc", method = RequestMethod.GET)
-    @ApiOperation(value = "Get payments ordered by amount desc", notes = "Return all not cancelled payments ordered by amount desc")
-    public List<PaymentAmountResponseDto> getNotCanceledPaymentsOrderedByAmountDesc() {
-        LOGGER.info("Get payments ordered by amount desc service is called. User country: {}", clientResolver.getClientCountry());
+    @RequestMapping(path = "/payments-sorted", method = RequestMethod.GET)
+    @ApiOperation(value = "Get payments ordered by chosen sort direction and sort parameter", notes = "Return all not cancelled" +
+            " payments ordered by chosen sort direction and sort parameter. Default sort direction: asc. Default sort parameter: amount")
+    public List<PaymentAmountResponseDto> getNotCanceledPayments(@RequestParam(name = "Sort Direction") Sort.Direction sortDirection,
+                                                                 @RequestParam(name = "Sort Parameter", defaultValue = "amount") String sortParameter) {
+        LOGGER.info("Get payments ordered by chosen sort direction and sort parameter service is called. User country: {}", clientResolver.getClientCountry());
 
-        return paymentService.getNotCanceledPaymentsOrderedByAmountDesc();
-    }
-
-    @RequestMapping(path = "/payments-by-amount-asc", method = RequestMethod.GET)
-    @ApiOperation(value = "Get payments ordered by amount asc", notes = "Return all not cancelled payments ordered by amount asc")
-    public List<PaymentAmountResponseDto> getNotCanceledPaymentsOrderedByAmountAsc() {
-        LOGGER.info("Get payments ordered by amount asc service is called. User country: {}", clientResolver.getClientCountry());
-
-        return paymentService.getNotCanceledPaymentsOrderedByAmountAsc();
+        return paymentService.getNotCanceledPayments(sortDirection, sortParameter);
     }
 
     @RequestMapping(path = "/cancel/{paymentId}", method = RequestMethod.PUT)

@@ -10,16 +10,16 @@ import javax.validation.constraints.NotNull;
 public class PaymentRequestDto {
 
     private Double amount;
-    @NotNull(message = "Debtor_iban value should be specified")
-    private String debtor_iban;
-    @NotNull(message = "Creditor_iban value should be specified")
-    private String creditor_iban;
+    @NotNull(message = "DebtorIban value should be specified")
+    private String debtorIban;
+    @NotNull(message = "CreditorIban value should be specified")
+    private String creditorIban;
     @NotNull(message = "PaymentType value should be specified")
     private PaymentType paymentType;
     @NotNull(message = "Currency value should be specified")
     private PaymentCurrency paymentCurrency;
     private String details;
-    private String creditor_bank_BIC_code;
+    private String creditorBankBICCode;
 
     public Double getAmount() {
         return amount;
@@ -37,20 +37,20 @@ public class PaymentRequestDto {
         this.paymentCurrency = paymentCurrency;
     }
 
-    public String getDebtor_iban() {
-        return debtor_iban;
+    public String getDebtorIban() {
+        return debtorIban;
     }
 
-    public void setDebtor_iban(String debtor_iban) {
-        this.debtor_iban = debtor_iban;
+    public void setDebtorIban(String debtorIban) {
+        this.debtorIban = debtorIban;
     }
 
-    public String getCreditor_iban() {
-        return creditor_iban;
+    public String getCreditorIban() {
+        return creditorIban;
     }
 
-    public void setCreditor_iban(String creditor_iban) {
-        this.creditor_iban = creditor_iban;
+    public void setCreditorIban(String creditorIban) {
+        this.creditorIban = creditorIban;
     }
 
     public PaymentType getPaymentType() {
@@ -69,11 +69,11 @@ public class PaymentRequestDto {
         this.details = details;
     }
 
-    public String getCreditor_bank_BIC_code() {
-        return creditor_bank_BIC_code;
+    public String getCreditorBankBICCode() {
+        return creditorBankBICCode;
     }
 
-    public void setCreditor_bank_BIC_code(String creditor_bank_BIC_code) {
-        this.creditor_bank_BIC_code = creditor_bank_BIC_code;
+    public void setCreditorBankBICCode(String creditorBankBICCode) {
+        this.creditorBankBICCode = creditorBankBICCode;
     }
 }
